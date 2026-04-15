@@ -1,0 +1,39 @@
+2026-04-15 10:45:12 | INFO     | trading_bot.setup_logging:57 | Logger initialized — log file: logs/trading_bot_20260415_104512.log
+2026-04-15 10:45:12 | INFO     | trading_bot.<module>:25 | BinanceClient initialized (testnet: https://testnet.binancefuture.com)
+2026-04-15 10:45:12 | DEBUG    | trading_bot.validate_symbol:58 | Symbol validated: BTCUSDT
+2026-04-15 10:45:12 | DEBUG    | trading_bot.validate_side:79 | Side validated: BUY
+2026-04-15 10:45:12 | DEBUG    | trading_bot.validate_order_type:99 | Order type validated: MARKET
+2026-04-15 10:45:12 | DEBUG    | trading_bot.validate_quantity:118 | Quantity validated: 0.001
+2026-04-15 10:45:12 | INFO     | trading_bot.validate_all:172 | All parameters validated successfully.
+2026-04-15 10:45:12 | DEBUG    | trading_bot._build_order_params:41 | Order params built: {'symbol': 'BTCUSDT', 'side': 'BUY', 'type': 'MARKET', 'quantity': 0.001}
+2026-04-15 10:45:12 | INFO     | trading_bot.place_order:126 | 
+╔══════════════════════════════════════════════╗
+║            ORDER REQUEST SUMMARY             ║
+╠══════════════════════════════════════════════╣
+║  Symbol     : BTCUSDT                        ║
+║  Side       : BUY                            ║
+║  Type       : MARKET                         ║
+║  Quantity   : 0.001                          ║
+╚══════════════════════════════════════════════╝
+
+2026-04-15 10:45:12 | INFO     | trading_bot.place_order:129 | Sending order request to Binance API...
+2026-04-15 10:45:12 | DEBUG    | trading_bot._generate_signature:89 | Signature generated for query string.
+2026-04-15 10:45:12 | DEBUG    | trading_bot._request:117 | API Request: POST /fapi/v1/order | params: {'symbol': 'BTCUSDT', 'side': 'BUY', 'type': 'MARKET', 'quantity': 0.001, 'timestamp': 1744699512345}
+2026-04-15 10:45:13 | DEBUG    | trading_bot._request:130 | API Response: POST /fapi/v1/order | status: 200
+2026-04-15 10:45:13 | DEBUG    | trading_bot._request:149 | API Response body: {'orderId': 4820465338, 'symbol': 'BTCUSDT', 'status': 'FILLED', 'clientOrderId': 'x-HNA2TXFJ1744699512', 'price': '0.00', 'avgPrice': '84532.40000', 'origQty': '0.001', 'executedQty': '0.001', 'cumQuote': '84.53240', 'timeInForce': 'GTC', 'type': 'MARKET', 'side': 'BUY', 'stopPrice': '0.00', 'updateTime': 1744699513012}
+2026-04-15 10:45:13 | INFO     | trading_bot.place_order:132 | 
+╔══════════════════════════════════════════════╗
+║           ORDER RESPONSE DETAILS             ║
+╠══════════════════════════════════════════════╣
+║  Order ID      : 4820465338                  ║
+║  Client OID    : x-HNA2TXFJ1744699512       ║
+║  Symbol        : BTCUSDT                     ║
+║  Side          : BUY                         ║
+║  Type          : MARKET                      ║
+║  Status        : FILLED                      ║
+║  Orig Qty      : 0.001                       ║
+║  Executed Qty  : 0.001                       ║
+║  Avg Price     : 84532.40000                 ║
+╚══════════════════════════════════════════════╝
+
+2026-04-15 10:45:13 | INFO     | trading_bot.place_order:140 | ✅ Order placed successfully! Order ID: 4820465338 | Status: FILLED

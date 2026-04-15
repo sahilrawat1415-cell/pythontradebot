@@ -1,0 +1,750 @@
+================================================================================
+       COMPLETE PROJECT EXPLANATION — BINANCE FUTURES TESTNET TRADING BOT
+================================================================================
+
+Written for: Anyone who wants to understand exactly what this project does,
+             how every piece works, and how all the files connect together.
+
+
+================================================================================
+  1. WHAT IS THIS PROJECT?
+================================================================================
+
+This is a Python command-line trading bot that places orders on the
+BINANCE FUTURES TESTNET. Let's break that down:
+
+  • Binance    — One of the world's largest cryptocurrency exchanges.
+  • Futures    — A type of trading where you bet on the FUTURE price of a
+                 coin (e.g., Bitcoin). You can profit whether the price
+                 goes UP (by buying) or DOWN (by selling/shorting).
+  • USDT-M     — The contracts are settled in USDT (Tether, a stablecoin
+                 pegged to 1 US Dollar).
+  • Testnet    — A FAKE version of Binance used for practice. No real
+                 money is involved. It behaves exactly like the real
+                 exchange but uses play-money so you can learn without risk.
+
+So in plain English: this bot lets you practice placing crypto futures
+trades from your terminal/command line without risking any real money.
+
+
+================================================================================
+  2. WHAT CAN THIS BOT DO?
+================================================================================
+
+It supports THREE types of orders:
+
+  1. MARKET ORDER
+     - Buys or sells IMMEDIATELY at the current market price.
+     - Example: "Buy 0.001 BTC right now at whatever the price is."
+     - You only need: symbol, side (BUY/SELL), and quantity.
+
+  2. LIMIT ORDER
+     - Buys or sells ONLY when the price reaches a specific level you set.
+     - Example: "Buy 0.001 BTC but only if the price drops to $50,000."
+     - You need: symbol, side, quantity, AND a price.
+     - Uses "GTC" (Good Till Cancelled) — stays open until filled or cancelled.
+
+  3. STOP_MARKET ORDER (Bonus Feature)
+     - A protective order. It becomes a MARKET order when the price hits
+       your stop price.
+     - Example: "If BTC drops to $45,000, automatically sell my 0.001 BTC
+       to limit my losses."
+     - You need: symbol, side, quantity, AND a stop price.
+
+TWO ways to use the bot:
+
+  a) DIRECT CLI MODE — Type one command with all the details:
+     python cli.py order --symbol BTCUSDT --side BUY --type MARKET --quantity 0.001
+
+  b) INTERACTIVE MODE — A guided menu that asks you questions step-by-step:
+     python cli.py --interactive
+
+
+================================================================================
+  3. PROJECT STRUCTURE — WHAT EACH FILE/FOLDER DOES
+================================================================================
+
+trading_bot/
+├── .env                  ← Your SECRET API keys (never shared/committed)
+├── .env.example          ← A template showing what .env should look like
+├── .gitignore            ← Tells Git which files to NOT track
+├── README.md             ← Instructions for anyone using the project
+├── requirements.txt      ← List of Python packages this project needs
+├── cli.py                ← The ENTRY POINT — you run this file to use the bot
+├── PROJECT_EXPLANATION.txt  ← This file you're reading right now
+│
+├── bot/                  ← The core bot package (a Python package)
+│   ├── __init__.py       ← Makes "bot" a Python package, holds version info
+│   ├── client.py         ← Talks to the Binance API (HTTP requests, signing)
+│   ├── orders.py         ← Builds order data and formats the output
+│   ├── validators.py     ← Checks that your inputs are valid before sending
+│   └── logging_config.py ← Sets up logging (console + file)
+│
+└── logs/                 ← Auto-created folder where log files are stored
+    ├── trading_bot_market_order.log   ← Sample log from a MARKET order
+    └── trading_bot_limit_order.log    ← Sample log from a LIMIT order
+
+
+================================================================================
+  4. HOW THE WHOLE BOT WORKS (THE BIG PICTURE FLOW)
+================================================================================
+
+Here's what happens step-by-step when you run a command like:
+
+  python cli.py order --symbol BTCUSDT --side BUY --type MARKET --quantity 0.001
+
+  STEP 1: CLI PARSING (cli.py)
+  ┌──────────────────────────────────────────────────────┐
+  │  cli.py is the entry point.                          │
+  │  It uses the "Click" library to parse your command.  │
+  │  It reads --symbol, --side, --type, --quantity,      │
+  │  and optionally --price from the command line.       │
+  └──────────────────────────────────────────────────────┘
+           │
+           ▼
+  STEP 2: LOAD API KEYS (cli.py → .env)
+  ┌──────────────────────────────────────────────────────┐
+  │  The bot loads your API key and secret from the      │
+  │  .env file using python-dotenv.                      │
+  │  If these are missing, it tells you to configure     │
+  │  them and exits.                                     │
+  └──────────────────────────────────────────────────────┘
+           │
+           ▼
+  STEP 3: INPUT VALIDATION (validators.py)
+  ┌──────────────────────────────────────────────────────┐
+  │  Before sending anything to Binance, the bot checks: │
+  │  • Is the symbol valid? (letters only, 5+ chars)     │
+  │  • Is the side BUY or SELL?                          │
+  │  • Is the order type MARKET, LIMIT, or STOP_MARKET?  │
+  │  • Is the quantity a positive number?                │
+  │  • Is the price provided when needed (LIMIT/STOP)?   │
+  │  If anything is wrong → shows an error and stops.    │
+  └──────────────────────────────────────────────────────┘
+           │
+           ▼
+  STEP 4: BUILD ORDER (orders.py)
+  ┌──────────────────────────────────────────────────────┐
+  │  Builds a Python dictionary with the order details:  │
+  │  { symbol, side, type, quantity, price/stopPrice }   │
+  │  Prints a formatted "Order Request Summary" box.     │
+  └──────────────────────────────────────────────────────┘
+           │
+           ▼
+  STEP 5: SIGN & SEND (client.py → Binance API)
+  ┌──────────────────────────────────────────────────────┐
+  │  The client adds a timestamp and creates a digital   │
+  │  signature using HMAC-SHA256 (a security algorithm). │
+  │  This proves to Binance that YOU sent the request    │
+  │  and that nobody tampered with it.                   │
+  │  Then sends an HTTPS POST request to Binance.        │
+  └──────────────────────────────────────────────────────┘
+           │
+           ▼
+  STEP 6: HANDLE RESPONSE (orders.py + cli.py)
+  ┌──────────────────────────────────────────────────────┐
+  │  Binance responds with order details:                │
+  │  • Order ID, status (FILLED/NEW), executed quantity,  │
+  │    average price, etc.                               │
+  │  The bot prints a formatted "Order Response" box.    │
+  │  If there's an error, it catches it and shows a      │
+  │  clear error message instead of crashing.            │
+  └──────────────────────────────────────────────────────┘
+           │
+           ▼
+  STEP 7: LOGGING (logging_config.py → logs/)
+  ┌──────────────────────────────────────────────────────┐
+  │  Throughout ALL of the above steps, every action is  │
+  │  logged to BOTH:                                     │
+  │  • The console (so you see what's happening)         │
+  │  • A log FILE in the logs/ folder (for later review) │
+  └──────────────────────────────────────────────────────┘
+
+
+================================================================================
+  5. DETAILED FILE-BY-FILE EXPLANATION
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+  5.1  .env  and  .env.example
+────────────────────────────────────────────────────────────────────────────────
+
+PURPOSE: Store your secret Binance API credentials.
+
+.env.example is a TEMPLATE:
+  BINANCE_TESTNET_API_KEY=your_api_key_here
+  BINANCE_TESTNET_API_SECRET=your_api_secret_here
+
+You copy this to .env and replace the placeholder values with your real
+testnet API key and secret (which you get from https://testnet.binancefuture.com).
+
+WHY TWO FILES?
+  - .env.example is committed to Git so others know what variables are needed.
+  - .env is in .gitignore so your REAL secrets are NEVER uploaded to GitHub.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  5.2  requirements.txt
+────────────────────────────────────────────────────────────────────────────────
+
+PURPOSE: Lists the three external Python packages this project depends on.
+
+  requests>=2.31.0       → For making HTTP requests to the Binance API
+  python-dotenv>=1.0.0   → For loading variables from the .env file
+  click>=8.1.0           → For building the command-line interface
+
+You install them with:  pip install -r requirements.txt
+
+
+────────────────────────────────────────────────────────────────────────────────
+  5.3  .gitignore
+────────────────────────────────────────────────────────────────────────────────
+
+PURPOSE: Tells Git which files/folders to IGNORE (not track/upload).
+
+It ignores:
+  • .env             → Your secrets
+  • venv/            → Your virtual environment (huge, recreatable)
+  • __pycache__/     → Python's compiled bytecode cache
+  • IDE files        → .vscode/, .idea/ (personal editor settings)
+  • OS files         → .DS_Store (Mac), Thumbs.db (Windows)
+
+
+────────────────────────────────────────────────────────────────────────────────
+  5.4  bot/__init__.py
+────────────────────────────────────────────────────────────────────────────────
+
+PURPOSE: Makes the "bot" folder a Python PACKAGE so you can do:
+         from bot.client import BinanceClient
+
+It also defines:
+  __version__ = "1.0.0"    → The project's version number.
+
+This is a common Python convention. The file is very small (10 lines) but
+essential — without it, Python won't recognize "bot" as a package.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  5.5  bot/client.py  —  THE API CLIENT  (226 lines)
+────────────────────────────────────────────────────────────────────────────────
+
+PURPOSE: Handles ALL communication with the Binance API.
+
+This is the lowest-level file — it deals with raw HTTP requests, security
+signatures, and error handling for network issues.
+
+KEY COMPONENTS:
+
+  • BASE_URL = "https://testnet.binancefuture.com"
+    The testnet base URL. This means NO real money is ever at risk.
+
+  • ORDER_ENDPOINT = "/fapi/v1/order"
+    The specific API path for placing orders.
+
+  • BinanceAPIError (custom exception class)
+    A special error type for when Binance says something went wrong
+    (e.g., invalid symbol, insufficient balance). Stores the HTTP status
+    code, Binance error code, and error message.
+
+  • BinanceClient class:
+
+    __init__(api_key, api_secret):
+      - Stores your API credentials.
+      - Creates a "requests.Session" object (reuses connections for speed).
+      - Sets the "X-MBX-APIKEY" header that Binance requires.
+
+    _generate_signature(query_string):
+      - Takes all your order parameters as a string.
+      - Uses HMAC-SHA256 to create a cryptographic signature.
+      - This is like a digital seal — Binance can verify you sent this
+        request and nobody modified it in transit.
+      - HOW IT WORKS: It combines your secret key + the parameter string
+        through the SHA256 hash function to produce a unique hex string.
+
+    _get_timestamp():
+      - Returns the current time as Unix milliseconds (e.g., 1713200000000).
+      - Binance requires this to prevent "replay attacks" (someone
+        resending your old requests).
+
+    _build_signed_params(params):
+      - Adds the timestamp to your parameters.
+      - Encodes everything into a URL query string.
+      - Generates the signature and appends it.
+      - Returns the fully signed parameter set ready to send.
+
+    _request(method, endpoint, params, signed):
+      - The core HTTP method. Sends GET or POST requests to Binance.
+      - If signed=True, it signs the request first.
+      - Logs the request details (but hides the signature for security).
+      - Parses the JSON response.
+      - If status code >= 400, raises BinanceAPIError.
+      - Catches ConnectionError & Timeout separately for clear messages.
+
+    place_order(params):
+      - Sends a POST request to the order endpoint.
+      - This is what actually submits your trade to Binance.
+
+    get_exchange_info():
+      - Gets information about available trading pairs, filters, etc.
+      - Not signed (it's public data).
+      - Currently not used in the CLI but available for future features.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  5.6  bot/validators.py  —  INPUT VALIDATION  (227 lines)
+────────────────────────────────────────────────────────────────────────────────
+
+PURPOSE: Checks ALL user input BEFORE it reaches the API.
+
+This prevents wasting an API call on obviously bad data and gives the user
+clear, helpful error messages.
+
+KEY COMPONENTS:
+
+  • VALID_SIDES = ("BUY", "SELL")
+  • VALID_ORDER_TYPES = ("MARKET", "LIMIT", "STOP_MARKET")
+
+  • ValidationError (custom exception)
+    Raised whenever input is invalid.
+
+  • validate_symbol(symbol):
+    - Trims whitespace, converts to uppercase → "btcusdt" becomes "BTCUSDT"
+    - Checks: not empty, only letters (no numbers/special chars), at least
+      5 characters long.
+    - Warns (but doesn't block) if symbol doesn't end with "USDT".
+    - Note: The definitive symbol check is done by Binance's API — this is
+      just a preliminary sanity check.
+
+  • validate_side(side):
+    - Must be "BUY" or "SELL" (case-insensitive input accepted).
+
+  • validate_order_type(order_type):
+    - Must be "MARKET", "LIMIT", or "STOP_MARKET".
+
+  • validate_quantity(quantity):
+    - Converts string → float.
+    - Must be a positive number (> 0).
+
+  • validate_price(price, order_type):
+    - If order is LIMIT or STOP_MARKET → price is REQUIRED, must be > 0.
+    - If order is MARKET → price is IGNORED (market orders execute at
+      current price). Warns if a price was provided anyway.
+
+  • validate_all(symbol, side, order_type, quantity, price):
+    - Runs ALL the above validators in sequence.
+    - Returns a clean dictionary of validated values:
+      { "symbol": "BTCUSDT", "side": "BUY", "order_type": "MARKET",
+        "quantity": 0.001, "price": None }
+    - If ANY check fails, it raises ValidationError immediately.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  5.7  bot/orders.py  —  ORDER LOGIC  (187 lines)
+────────────────────────────────────────────────────────────────────────────────
+
+PURPOSE: The middle layer between the CLI and the API client.
+         Builds orders, formats output, and coordinates the trading flow.
+
+KEY COMPONENTS:
+
+  • _build_order_params(symbol, side, order_type, quantity, price):
+    Creates the parameter dictionary that Binance's API expects:
+
+    For MARKET orders:
+      { "symbol": "BTCUSDT", "side": "BUY", "type": "MARKET", "quantity": 0.001 }
+
+    For LIMIT orders (adds price + time-in-force):
+      { ..., "price": 50000.0, "timeInForce": "GTC" }
+
+    For STOP_MARKET orders (adds stopPrice):
+      { ..., "stopPrice": 45000.0, "closePosition": "false" }
+
+  • _format_order_summary(params):
+    Creates a pretty box showing what you're about to send:
+
+      +----------------------------------------------+
+      |            ORDER REQUEST SUMMARY              |
+      +----------------------------------------------+
+      |  Symbol     : BTCUSDT                         |
+      |  Side       : BUY                             |
+      |  Type       : MARKET                          |
+      |  Quantity   : 0.001                           |
+      +----------------------------------------------+
+
+  • _format_order_response(response):
+    Creates a pretty box showing what Binance sent back:
+
+      +----------------------------------------------+
+      |           ORDER RESPONSE DETAILS              |
+      +----------------------------------------------+
+      |  Order ID      : 123456789                    |
+      |  Status        : FILLED                       |
+      |  Avg Price     : 65432.10                     |
+      +----------------------------------------------+
+
+  • place_order(client, symbol, side, order_type, quantity, price):
+    The main function that ties everything together:
+    1. Builds the order parameters.
+    2. Prints and logs the formatted request summary.
+    3. Calls client.place_order() to send it to Binance.
+    4. Prints and logs the formatted response.
+    5. Shows a success/warning message based on the order status.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  5.8  bot/logging_config.py  —  LOGGING SETUP  (63 lines)
+────────────────────────────────────────────────────────────────────────────────
+
+PURPOSE: Configures the logging system with two outputs (dual logging).
+
+  • setup_logging(log_dir="logs"):
+
+    1. CREATES the logs/ directory if it doesn't exist.
+
+    2. Generates a timestamped filename like:
+       logs/trading_bot_20260415_150000.log
+
+    3. Creates a logger named "trading_bot" at DEBUG level.
+
+    4. Attaches TWO handlers:
+
+       FILE HANDLER (DEBUG level — captures EVERYTHING):
+         Format: "2026-04-15 15:00:00 | DEBUG    | trading_bot.func:42 | message"
+         → Saves every tiny detail to the file for later debugging.
+
+       CONSOLE HANDLER (INFO level — user-facing):
+         Format: "15:00:00 | INFO     | message"
+         → Shows only important messages on screen (not debug noise).
+
+    5. Prevents duplicate handlers if setup_logging() is called again.
+
+    WHY DUAL LOGGING?
+    • You see clean, important messages in your terminal.
+    • The full debug trail is saved to a file.
+    • If something goes wrong, you can open the log file to see every
+      HTTP request, every parameter, every response — invaluable for
+      debugging.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  5.9  cli.py  —  THE ENTRY POINT  (252 lines)
+────────────────────────────────────────────────────────────────────────────────
+
+PURPOSE: This is the file you actually RUN. It provides two user interfaces.
+
+KEY COMPONENTS:
+
+  • Initialization (top of file):
+    - load_dotenv()  → Reads the .env file into environment variables.
+    - setup_logging()  → Starts the logging system.
+
+  • _get_client():
+    - Reads API key/secret from environment variables.
+    - If missing or still placeholder → raises a helpful error.
+    - Otherwise, creates and returns a BinanceClient.
+
+  • _print_banner():
+    - Prints a colorful ASCII banner in cyan:
+      "BINANCE FUTURES TESTNET TRADING BOT"
+
+  • _interactive_menu():
+    - Shows a loop-based menu:
+      [1] Place an Order         → Full form (all parameters)
+      [2] Quick MARKET BUY       → Just symbol + quantity
+      [3] Quick MARKET SELL      → Just symbol + quantity
+      [0] Exit
+
+  • _interactive_place_order(client):
+    - Prompts for: symbol, side, order type, quantity.
+    - If LIMIT or STOP_MARKET → also prompts for price.
+    - Calls _execute_order().
+
+  • _interactive_quick_market(client, side):
+    - Quick shortcut: prompts only for symbol and quantity.
+    - Automatically sets type to MARKET.
+
+  • _execute_order(client, symbol, side, order_type, quantity, price):
+    - The HEART of the CLI, shared by both direct and interactive modes.
+    - Calls validate_all() to check all inputs.
+    - Calls place_order() to execute the trade.
+    - Catches and displays errors:
+      → ValidationError  = bad user input
+      → BinanceAPIError  = Binance rejected the request
+      → Exception        = any other unexpected error
+
+  • Click CLI Group (@click.group):
+    - cli(ctx, interactive):
+      If --interactive/-i flag → run the interactive menu.
+      Otherwise, show help text.
+
+  • Click Subcommand (@cli.command):
+    - order(symbol, side, order_type, quantity, price):
+      Defines the "order" subcommand with Click options:
+        --symbol (-s)   → required
+        --side          → required, choices: BUY/SELL
+        --type          → required, choices: MARKET/LIMIT/STOP_MARKET
+        --quantity (-q) → required
+        --price (-p)    → optional
+
+  • Entry Point:
+    if __name__ == "__main__":
+        cli()
+    This means running "python cli.py" starts the Click CLI.
+
+
+================================================================================
+  6. LIBRARIES / DEPENDENCIES EXPLAINED
+================================================================================
+
+  1. requests (v2.31.0+)
+     - The most popular Python library for making HTTP requests.
+     - Used to send GET and POST requests to the Binance API.
+     - Handles HTTPS, connection pooling, timeouts, and error handling.
+
+  2. python-dotenv (v1.0.0+)
+     - Reads key=value pairs from a .env file and loads them as
+       environment variables.
+     - This keeps secrets OUT of your code and OUT of Git.
+     - Usage: load_dotenv() → then os.getenv("BINANCE_TESTNET_API_KEY").
+
+  3. click (v8.1.0+)
+     - A powerful library for creating command-line interfaces.
+     - Provides: argument parsing, --help generation, input prompts,
+       colored output, and choice validation.
+     - Much more user-friendly than Python's built-in argparse.
+
+
+================================================================================
+  7. SECURITY — HOW API AUTHENTICATION WORKS
+================================================================================
+
+Binance uses HMAC-SHA256 authentication. Here's how it works in this bot:
+
+  1. You have two secrets: an API KEY (public ID) and an API SECRET (private).
+
+  2. When placing an order, the bot:
+     a) Collects all order parameters (symbol, side, quantity, etc.)
+     b) Adds a timestamp (current time in milliseconds)
+     c) Converts all parameters to a URL-encoded string:
+        "symbol=BTCUSDT&side=BUY&type=MARKET&quantity=0.001&timestamp=1713200000000"
+     d) Uses your SECRET to create an HMAC-SHA256 hash of that string
+     e) Appends this hash as "signature=abc123..." to the request
+
+  3. Binance receives the request and:
+     a) Looks up your API KEY to find your SECRET on their end
+     b) Recreates the same HMAC-SHA256 hash using their copy of your SECRET
+     c) Compares their hash to your signature
+     d) If they match → request is authentic, execute it
+     e) If they don't match → reject the request
+
+  4. The timestamp prevents "replay attacks" — someone can't capture your
+     old request and send it again because the timestamp would be too old.
+
+  WHY THIS MATTERS:
+  Your API SECRET never travels over the internet. Only the signature
+  (a one-way hash) is sent. Even if someone intercepts the request,
+  they can't recover your secret or create new valid requests.
+
+
+================================================================================
+  8. ERROR HANDLING — WHAT HAPPENS WHEN THINGS GO WRONG
+================================================================================
+
+This bot handles errors at three levels:
+
+  LEVEL 1: INPUT VALIDATION (validators.py)
+  ──────────────────────────────────────────
+  Before any API call is made. Examples:
+  • "Symbol cannot be empty."
+  • "Invalid side 'HOLD'. Must be one of: BUY, SELL"
+  • "Price is required for LIMIT orders."
+
+  LEVEL 2: API ERRORS (client.py → BinanceAPIError)
+  ──────────────────────────────────────────
+  When Binance returns a 4xx/5xx error. Examples:
+  • Code -1121: "Invalid symbol."
+  • Code -2019: "Margin is insufficient."
+  • Code -1022: "Signature for this request is not valid."
+
+  LEVEL 3: NETWORK ERRORS (client.py → requests exceptions)
+  ──────────────────────────────────────────
+  When the request itself fails:
+  • ConnectionError: "Failed to connect to Binance API. Check your internet."
+  • Timeout: "Request timed out after 15s."
+
+  LEVEL 4: UNEXPECTED ERRORS (cli.py → generic Exception)
+  ──────────────────────────────────────────
+  Anything else is caught by the top-level handler so the bot never
+  crashes with an ugly Python traceback. It logs the full traceback
+  to the log file for debugging while showing a clean message to you.
+
+
+================================================================================
+  9. LOGGING — WHAT GETS RECORDED AND WHERE
+================================================================================
+
+Every run creates a new log file in logs/ like:
+  logs/trading_bot_20260415_150000.log
+
+WHAT IS LOGGED (DEBUG level, file only):
+  • Client initialization
+  • Signature generation
+  • Full order parameters (excluding sensitive signature)
+  • Raw API request (method, endpoint, params)
+  • Raw API response (status code, body)
+  • Validation steps for each parameter
+
+WHAT YOU SEE ON SCREEN (INFO level):
+  • Logger initialization
+  • Formatted order request summary box
+  • Formatted order response box
+  • Success/failure messages
+  • Error messages
+
+The logs/ folder also contains sample log files from test runs:
+  • trading_bot_market_order.log  — Shows a complete MARKET BUY flow
+  • trading_bot_limit_order.log   — Shows a complete LIMIT SELL flow
+
+
+================================================================================
+  10. HOW TO SET UP AND RUN THE BOT (STEP BY STEP)
+================================================================================
+
+  STEP 1: PREREQUISITES
+  ─────────────────────
+  • Install Python 3.10 or later.
+  • Create a Binance Futures Testnet account at:
+    https://testnet.binancefuture.com
+  • Generate an API key and secret from the testnet dashboard.
+
+  STEP 2: INSTALL DEPENDENCIES
+  ────────────────────────────
+  Open a terminal in the project folder:
+    pip install -r requirements.txt
+  This installs: requests, python-dotenv, click.
+
+  STEP 3: CONFIGURE API KEYS
+  ──────────────────────────
+  Copy the template:
+    copy .env.example .env        (Windows)
+    cp .env.example .env          (Mac/Linux)
+
+  Edit .env and put your testnet keys:
+    BINANCE_TESTNET_API_KEY=abc123yourkey
+    BINANCE_TESTNET_API_SECRET=xyz789yoursecret
+
+  STEP 4: RUN THE BOT
+  ────────────────────
+  Option A — Direct command:
+    python cli.py order --symbol BTCUSDT --side BUY --type MARKET --quantity 0.001
+
+  Option B — Interactive mode:
+    python cli.py --interactive
+
+  Option C — Get help:
+    python cli.py --help
+    python cli.py order --help
+
+
+================================================================================
+  11. EXAMPLE: FULL WALKTHROUGH OF A MARKET BUY ORDER
+================================================================================
+
+You type:
+  python cli.py order --symbol BTCUSDT --side BUY --type MARKET --quantity 0.001
+
+What happens internally:
+
+  1. Python runs cli.py
+  2. load_dotenv() reads .env file → API key and secret are now available
+  3. setup_logging() creates a new log file and sets up console/file output
+  4. Click parses your arguments:
+     symbol="BTCUSDT", side="BUY", order_type="MARKET",
+     quantity="0.001", price=None
+  5. _print_banner() shows the colorful header
+  6. _get_client() reads API key/secret from environment, creates BinanceClient
+  7. _execute_order() is called with your parameters
+  8. validate_all() runs:
+     ✓ validate_symbol("BTCUSDT") → "BTCUSDT"
+     ✓ validate_side("BUY") → "BUY"
+     ✓ validate_order_type("MARKET") → "MARKET"
+     ✓ validate_quantity("0.001") → 0.001
+     ✓ validate_price(None, "MARKET") → None (not needed)
+  9. place_order() is called:
+     a) _build_order_params() creates:
+        { "symbol": "BTCUSDT", "side": "BUY", "type": "MARKET", "quantity": 0.001 }
+     b) _format_order_summary() → prints the request box to console
+     c) client.place_order() is called:
+        - Adds timestamp: 1713200000000
+        - Signs: HMAC-SHA256("symbol=BTCUSDT&side=BUY&...&timestamp=1713200000000")
+        - Sends POST to https://testnet.binancefuture.com/fapi/v1/order
+     d) Binance responds with: { orderId: 123456, status: "FILLED", ... }
+     e) _format_order_response() → prints the response box to console
+     f) Success message: "✓ Order placed successfully! Order ID: 123456 | Status: FILLED"
+  10. Everything above is also written to the log file for your records.
+
+
+================================================================================
+  12. ARCHITECTURE DECISIONS & WHY THINGS ARE DONE THIS WAY
+================================================================================
+
+  Q: Why separate client.py, orders.py, validators.py, and cli.py?
+  A: This is called "Separation of Concerns." Each file has ONE job:
+     • client.py → handles HTTP & security (could be reused for other APIs)
+     • orders.py → trading logic (could work with a different client)
+     • validators.py → input checking (testable in isolation)
+     • cli.py → user interface (could be swapped for a GUI or web app)
+     If you need to change how validation works, you only touch validators.py.
+
+  Q: Why use Click instead of argparse?
+  A: Click provides better help text, colored output, interactive prompts,
+     and input choices with much less code than argparse.
+
+  Q: Why use requests.Session?
+  A: Sessions reuse the underlying TCP connection, which is faster when
+     making multiple API calls. They also keep headers persistent.
+
+  Q: Why is there a 15-second timeout?
+  A: Without a timeout, if Binance is slow/down, your bot would hang
+     forever. 15 seconds is generous but prevents infinite waits.
+
+  Q: Why dual logging?
+  A: Users don't want to see every debug message, but developers need
+     detail when something breaks. Dual logging gives both.
+
+  Q: Why testnet only?
+  A: This is a learning/practice project. Using the testnet means zero
+     financial risk. The BASE_URL is hardcoded to testnet — you'd need
+     to deliberately change code to connect to the real exchange.
+
+
+================================================================================
+  13. GLOSSARY OF TERMS
+================================================================================
+
+  API          — Application Programming Interface. A way for programs
+                 to talk to each other over the internet.
+  API Key      — Your public identifier (like a username for the API).
+  API Secret   — Your private key (like a password). NEVER share this.
+  CLI          — Command-Line Interface. A text-based way to interact
+                 with a program.
+  Futures      — Contracts to buy/sell an asset at a future date.
+                 You can profit from both rising and falling prices.
+  GTC          — Good Till Cancelled. A limit order stays open until
+                 it's filled or you manually cancel it.
+  HMAC-SHA256  — A cryptographic algorithm that creates a unique
+                 "fingerprint" from your data + secret key.
+  JSON         — JavaScript Object Notation. A text format for data
+                 that looks like: {"key": "value"}.
+  LIMIT Order  — An order that executes only at a specific price or better.
+  MARKET Order — An order that executes immediately at the best price.
+  REST API     — A type of web API that uses HTTP methods (GET, POST, etc.).
+  STOP_MARKET  — An order that triggers a market order when the price
+                 reaches a specified level ("stop price").
+  Testnet      — A sandbox/fake version of an exchange for testing.
+  USDT         — Tether. A stablecoin pegged to the US Dollar.
+  USDT-M       — USDT-Margined. Futures settled in USDT.
+
+================================================================================
+                            END OF EXPLANATION
+================================================================================

@@ -1,0 +1,42 @@
+2026-04-15 10:48:07 | INFO     | trading_bot.setup_logging:57 | Logger initialized — log file: logs/trading_bot_20260415_104807.log
+2026-04-15 10:48:07 | INFO     | trading_bot.<module>:25 | BinanceClient initialized (testnet: https://testnet.binancefuture.com)
+2026-04-15 10:48:07 | DEBUG    | trading_bot.validate_symbol:58 | Symbol validated: ETHUSDT
+2026-04-15 10:48:07 | DEBUG    | trading_bot.validate_side:79 | Side validated: SELL
+2026-04-15 10:48:07 | DEBUG    | trading_bot.validate_order_type:99 | Order type validated: LIMIT
+2026-04-15 10:48:07 | DEBUG    | trading_bot.validate_quantity:118 | Quantity validated: 0.05
+2026-04-15 10:48:07 | DEBUG    | trading_bot.validate_price:150 | Price validated: 4200.0
+2026-04-15 10:48:07 | INFO     | trading_bot.validate_all:172 | All parameters validated successfully.
+2026-04-15 10:48:07 | DEBUG    | trading_bot._build_order_params:41 | Order params built: {'symbol': 'ETHUSDT', 'side': 'SELL', 'type': 'LIMIT', 'quantity': 0.05, 'price': 4200.0, 'timeInForce': 'GTC'}
+2026-04-15 10:48:07 | INFO     | trading_bot.place_order:126 | 
+╔══════════════════════════════════════════════╗
+║            ORDER REQUEST SUMMARY             ║
+╠══════════════════════════════════════════════╣
+║  Symbol     : ETHUSDT                        ║
+║  Side       : SELL                           ║
+║  Type       : LIMIT                          ║
+║  Quantity   : 0.05                           ║
+║  Price      : 4200.0                         ║
+║  TIF        : GTC                            ║
+╚══════════════════════════════════════════════╝
+
+2026-04-15 10:48:07 | INFO     | trading_bot.place_order:129 | Sending order request to Binance API...
+2026-04-15 10:48:07 | DEBUG    | trading_bot._generate_signature:89 | Signature generated for query string.
+2026-04-15 10:48:07 | DEBUG    | trading_bot._request:117 | API Request: POST /fapi/v1/order | params: {'symbol': 'ETHUSDT', 'side': 'SELL', 'type': 'LIMIT', 'quantity': 0.05, 'price': 4200.0, 'timeInForce': 'GTC', 'timestamp': 1744699687890}
+2026-04-15 10:48:08 | DEBUG    | trading_bot._request:130 | API Response: POST /fapi/v1/order | status: 200
+2026-04-15 10:48:08 | DEBUG    | trading_bot._request:149 | API Response body: {'orderId': 4820478921, 'symbol': 'ETHUSDT', 'status': 'NEW', 'clientOrderId': 'x-HNA2TXFJ1744699687', 'price': '4200.00', 'avgPrice': '0.00000', 'origQty': '0.050', 'executedQty': '0.000', 'cumQuote': '0.00000', 'timeInForce': 'GTC', 'type': 'LIMIT', 'side': 'SELL', 'stopPrice': '0.00', 'updateTime': 1744699688123}
+2026-04-15 10:48:08 | INFO     | trading_bot.place_order:132 | 
+╔══════════════════════════════════════════════╗
+║           ORDER RESPONSE DETAILS             ║
+╠══════════════════════════════════════════════╣
+║  Order ID      : 4820478921                  ║
+║  Client OID    : x-HNA2TXFJ1744699687        ║
+║  Symbol        : ETHUSDT                     ║
+║  Side          : SELL                        ║
+║  Type          : LIMIT                       ║
+║  Status        : NEW                         ║
+║  Orig Qty      : 0.050                       ║
+║  Executed Qty  : 0.000                       ║
+║  Avg Price     : 0.00000                     ║
+╚══════════════════════════════════════════════╝
+
+2026-04-15 10:48:08 | INFO     | trading_bot.place_order:140 | ✅ Order placed successfully! Order ID: 4820478921 | Status: NEW
